@@ -21,18 +21,312 @@
   <meta name="description" content="A new Flutter project.">
 
   <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="sunghun_portfolio">
+  <meta name="apple-mobile-web-app-title" content="flutter_app">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>sunghun_portfolio</title>
+  <title>flutter_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    /* 파티클 배경 효과 */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    
+    /* 3D 큐브 로더 */
+    .cube-loader {
+      width: 60px;
+      height: 60px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotate 2s linear infinite;
+    }
+    
+    .cube-face {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .cube-face:nth-child(1) { transform: translateZ(30px); }
+    .cube-face:nth-child(2) { transform: rotateY(90deg) translateZ(30px); }
+    .cube-face:nth-child(3) { transform: rotateY(180deg) translateZ(30px); }
+    .cube-face:nth-child(4) { transform: rotateY(-90deg) translateZ(30px); }
+    .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(30px); }
+    .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(30px); }
+    
+    @keyframes rotate {
+      0% { transform: rotateX(0deg) rotateY(0deg); }
+      100% { transform: rotateX(360deg) rotateY(360deg); }
+    }
+    
+    /* 펄스 효과 */
+    .pulse-ring {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border: 3px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      animation: pulse 2s linear infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(0.5);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+    
+    /* 타이핑 효과 텍스트 */
+    .typing-text {
+      color: white;
+      font-family: 'Courier New', monospace;
+      font-size: 20px;
+      margin-top: 40px;
+      position: relative;
+    }
+    
+    .typing-text::after {
+      content: '|';
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    
+    /* 파티클 효과 */
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: float 3s linear infinite;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) scale(0);
+      }
+      10% {
+        transform: translateY(90vh) scale(1);
+      }
+      100% {
+        transform: translateY(-10vh) scale(0);
+      }
+    }
+    
+    /* 로딩 퍼센티지 */
+    .loading-percentage {
+      color: rgba(255, 255, 255, 0.8);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- 커스텀 로딩 화면 -->
+  <div id="loading" class="loading-container">
+    <!-- 파티클 배경 -->
+    <div id="particles"></div>
+    
+    <!-- 펄스 효과 -->
+    <div class="pulse-ring"></div>
+    
+    <!-- 3D 큐브 로더 -->
+    <div class="cube-loader">
+      <div class="cube-face"></div>
+      <div class="cube-face"></div>
+      <div class="cube-face"></div>
+      <div class="cube-face"></div>
+      <div class="cube-face"></div>
+      <div class="cube-face"></div>
+    </div>
+    
+    <!-- 타이핑 효과 텍스트 -->
+    <div class="typing-text" id="typing-text"></div>
+    
+    <!-- 로딩 퍼센티지 -->
+    <div class="loading-percentage" id="loading-percentage">0%</div>
+  </div>
+
+  <script>
+    // 파티클 생성
+    const particlesContainer = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 3 + 's';
+      particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+      particlesContainer.appendChild(particle);
+    }
+    
+    // 타이핑 효과
+    const messages = ['앱을 초기화하는 중', '리소스를 로드하는 중', '거의 완료되었습니다'];
+    let messageIndex = 0;
+    let charIndex = 0;
+    const typingElement = document.getElementById('typing-text');
+    
+    function typeMessage() {
+      if (charIndex < messages[messageIndex].length) {
+        typingElement.textContent += messages[messageIndex][charIndex];
+        charIndex++;
+        setTimeout(typeMessage, 100);
+      } else {
+        setTimeout(() => {
+          typingElement.textContent = '';
+          charIndex = 0;
+          messageIndex = (messageIndex + 1) % messages.length;
+          typeMessage();
+        }, 2000);
+      }
+    }
+    typeMessage();
+    
+    // 로딩 퍼센티지
+    let loadingProgress = 0;
+    const percentageElement = document.getElementById('loading-percentage');
+    
+    function updateProgress() {
+      if (loadingProgress < 90) {
+        loadingProgress += Math.random() * 10;
+        loadingProgress = Math.min(loadingProgress, 90);
+        percentageElement.textContent = Math.floor(loadingProgress) + '%';
+      }
+    }
+    const progressInterval = setInterval(updateProgress, 300);
+    
+    // 로딩 화면 제거 함수
+    function removeLoadingScreen() {
+      clearInterval(progressInterval);
+      percentageElement.textContent = '100%';
+      
+      // 페이드 아웃
+      setTimeout(() => {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.opacity = '0';
+          loadingElement.style.transition = 'opacity 0.5s ease-out';
+          
+          setTimeout(() => {
+            loadingElement.remove();
+          }, 500);
+        }
+      }, 300);
+    }
+    
+    // Flutter 로더 스크립트 태그 (flutter.js) 로드 후 실행
+    window.addEventListener('flutter-first-frame', function () {
+      removeLoadingScreen();
+    });
+    
+    // 백업: 타임아웃 설정 (10초 후 강제 제거)
+    setTimeout(() => {
+      const loadingElement = document.getElementById('loading');
+      if (loadingElement) {
+        console.log('Forcing loading screen removal after timeout');
+        removeLoadingScreen();
+      }
+    }, 10000);
+  </script>
+
+  <!-- This script installs service_worker.js to provide PWA functionality to
+       application. For more information, see:
+       https://developers.google.com/web/fundamentals/primers/service-workers -->
+  <script>
+    const serviceWorkerVersion = "503587230";
+    var scriptLoaded = false;
+    function loadMainDartJs() {
+      if (scriptLoaded) {
+        return;
+      }
+      scriptLoaded = true;
+      var scriptTag = document.createElement('script');
+      scriptTag.src = 'main.dart.js';
+      scriptTag.type = 'application/javascript';
+      document.body.append(scriptTag);
+    }
+
+    if ('serviceWorker' in navigator) {
+      // Service workers are supported. Use them.
+      window.addEventListener('load', function () {
+        // Wait for registration to finish before dropping the <script> tag.
+        // Otherwise, the browser will load the script multiple times,
+        // potentially different versions.
+        var serviceWorkerUrl = 'flutter_service_worker.js?v=' + serviceWorkerVersion;
+        navigator.serviceWorker.register(serviceWorkerUrl)
+          .then((reg) => {
+            function waitForActivation(serviceWorker) {
+              serviceWorker.addEventListener('statechange', () => {
+                if (serviceWorker.state == 'activated') {
+                  console.log('Installed new service worker.');
+                  loadMainDartJs();
+                }
+              });
+            }
+            if (!reg.active && (reg.installing || reg.waiting)) {
+              // No active web worker and we have installed or are installing
+              // one for the first time. Simply wait for it to activate.
+              waitForActivation(reg.installing || reg.waiting);
+            } else if (!reg.active.scriptURL.endsWith(serviceWorkerVersion)) {
+              // When the app updates the serviceWorkerVersion changes, so we
+              // need to ask the service worker to update.
+              console.log('New service worker available.');
+              reg.update();
+              waitForActivation(reg.installing);
+            } else {
+              // Existing service worker is still good.
+              console.log('Loading app from service worker.');
+              loadMainDartJs();
+            }
+          });
+
+        // If service worker doesn't succeed in a reasonable amount of time,
+        // fallback to plain <script> tag.
+        setTimeout(() => {
+          if (!scriptLoaded) {
+            console.warn(
+              'Failed to load app from service worker. Falling back to plain <script> tag.',
+            );
+            loadMainDartJs();
+          }
+        }, 4000);
+      });
+    } else {
+      // Service workers not supported. Just drop the <script> tag.
+      loadMainDartJs();
+    }
+  </script>
 </body>
 </html>
