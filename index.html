@@ -1,34 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="flutter_app">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
   <title>flutter_app</title>
   <link rel="manifest" href="manifest.json">
 
@@ -39,7 +20,6 @@
       overflow: hidden;
     }
     
-    /* 파티클 배경 효과 */
     .loading-container {
       position: fixed;
       top: 0;
@@ -54,7 +34,6 @@
       z-index: 9999;
     }
     
-    /* 3D 큐브 로더 */
     .cube-loader {
       width: 60px;
       height: 60px;
@@ -83,7 +62,6 @@
       100% { transform: rotateX(360deg) rotateY(360deg); }
     }
     
-    /* 펄스 효과 */
     .pulse-ring {
       position: absolute;
       width: 100px;
@@ -104,7 +82,6 @@
       }
     }
     
-    /* 타이핑 효과 텍스트 */
     .typing-text {
       color: white;
       font-family: 'Courier New', monospace;
@@ -123,7 +100,6 @@
       51%, 100% { opacity: 0; }
     }
     
-    /* 파티클 효과 */
     .particle {
       position: absolute;
       width: 4px;
@@ -145,7 +121,6 @@
       }
     }
     
-    /* 로딩 퍼센티지 */
     .loading-percentage {
       color: rgba(255, 255, 255, 0.8);
       font-family: Arial, sans-serif;
@@ -157,13 +132,8 @@
 <body>
   <!-- 커스텀 로딩 화면 -->
   <div id="loading" class="loading-container">
-    <!-- 파티클 배경 -->
     <div id="particles"></div>
-    
-    <!-- 펄스 효과 -->
     <div class="pulse-ring"></div>
-    
-    <!-- 3D 큐브 로더 -->
     <div class="cube-loader">
       <div class="cube-face"></div>
       <div class="cube-face"></div>
@@ -172,11 +142,7 @@
       <div class="cube-face"></div>
       <div class="cube-face"></div>
     </div>
-    
-    <!-- 타이핑 효과 텍스트 -->
     <div class="typing-text" id="typing-text"></div>
-    
-    <!-- 로딩 퍼센티지 -->
     <div class="loading-percentage" id="loading-percentage">0%</div>
   </div>
 
@@ -232,7 +198,6 @@
       clearInterval(progressInterval);
       percentageElement.textContent = '100%';
       
-      // 페이드 아웃
       setTimeout(() => {
         const loadingElement = document.getElementById('loading');
         if (loadingElement) {
@@ -246,8 +211,9 @@
       }, 300);
     }
     
-    // Flutter 로더 스크립트 태그 (flutter.js) 로드 후 실행
+    // Flutter 첫 프레임 렌더링 완료 시
     window.addEventListener('flutter-first-frame', function () {
+      console.log('Flutter first frame rendered');
       removeLoadingScreen();
     });
     
@@ -261,72 +227,32 @@
     }, 10000);
   </script>
 
-  <!-- This script installs service_worker.js to provide PWA functionality to
-       application. For more information, see:
-       https://developers.google.com/web/fundamentals/primers/service-workers -->
+  <!-- Flutter 앱 로드 (Service Worker 없이) -->
   <script>
-    const serviceWorkerVersion = "503587230";
-    var scriptLoaded = false;
-    function loadMainDartJs() {
-      if (scriptLoaded) {
-        return;
-      }
-      scriptLoaded = true;
-      var scriptTag = document.createElement('script');
-      scriptTag.src = 'main.dart.js';
-      scriptTag.type = 'application/javascript';
-      document.body.append(scriptTag);
-    }
-
-    if ('serviceWorker' in navigator) {
-      // Service workers are supported. Use them.
-      window.addEventListener('load', function () {
-        // Wait for registration to finish before dropping the <script> tag.
-        // Otherwise, the browser will load the script multiple times,
-        // potentially different versions.
-        var serviceWorkerUrl = 'flutter_service_worker.js?v=' + serviceWorkerVersion;
-        navigator.serviceWorker.register(serviceWorkerUrl)
-          .then((reg) => {
-            function waitForActivation(serviceWorker) {
-              serviceWorker.addEventListener('statechange', () => {
-                if (serviceWorker.state == 'activated') {
-                  console.log('Installed new service worker.');
-                  loadMainDartJs();
-                }
-              });
-            }
-            if (!reg.active && (reg.installing || reg.waiting)) {
-              // No active web worker and we have installed or are installing
-              // one for the first time. Simply wait for it to activate.
-              waitForActivation(reg.installing || reg.waiting);
-            } else if (!reg.active.scriptURL.endsWith(serviceWorkerVersion)) {
-              // When the app updates the serviceWorkerVersion changes, so we
-              // need to ask the service worker to update.
-              console.log('New service worker available.');
-              reg.update();
-              waitForActivation(reg.installing);
-            } else {
-              // Existing service worker is still good.
-              console.log('Loading app from service worker.');
-              loadMainDartJs();
-            }
-          });
-
-        // If service worker doesn't succeed in a reasonable amount of time,
-        // fallback to plain <script> tag.
-        setTimeout(() => {
-          if (!scriptLoaded) {
-            console.warn(
-              'Failed to load app from service worker. Falling back to plain <script> tag.',
-            );
-            loadMainDartJs();
-          }
-        }, 4000);
+    // 직접 main.dart.js 로드
+    var scriptTag = document.createElement('script');
+    scriptTag.src = 'main.dart.js';
+    scriptTag.type = 'application/javascript';
+    
+    // DOM이 준비되면 스크립트 추가
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.appendChild(scriptTag);
       });
     } else {
-      // Service workers not supported. Just drop the <script> tag.
-      loadMainDartJs();
+      document.body.appendChild(scriptTag);
     }
+    
+    // 추가 디버깅 정보
+    scriptTag.onload = function() {
+      console.log('main.dart.js loaded successfully');
+    };
+    
+    scriptTag.onerror = function() {
+      console.error('Failed to load main.dart.js');
+      // 에러 시에도 로딩 화면 제거
+      removeLoadingScreen();
+    };
   </script>
 </body>
 </html>
